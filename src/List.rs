@@ -1,36 +1,134 @@
-// Link types!
-struct Link<'a, D> {
+// Link types
+#[derive(Clone)]
+pub struct Link<D> {
     data: D,
-    next: &'a mut Link<'a, D>,
+    next: Option<Box<Link<D>>>,
 }
 
-struct DoubleLink<'a, D> {
+pub struct DoubleLink<D> {
     data: D,
-    next: &'a mut DoubleLink<'a, D>,
-    prev: &'a mut DoubleLink<'a, D>,
+    next: Option<Box<DoubleLink<D>>>,
+    prev: Option<Box<DoubleLink<D>>>,
 
 }
 
 // Lists types!
-struct List<'a, D> {
-    head: &'a mut Link<'a, D>,
+pub struct List<D> {
+    head: Option<Box<Link<D>>>,
     sorted: bool,
 }
 
-struct DoubleList<'a, D> {
-    head: &'a mut DoubleLink<'a, D>,
+pub struct DoubleList<D> {
+    head: Option<Box<DoubleLink<D>>>,
     sorted: bool,
 }
 
-struct CustomList<'a, D> {
-    head: &'a mut DoubleLink<'a, D>,
-    tail: &'a mut DoubleLink<'a, D>,
+pub struct CustomList<D> {
+    head: Option<Box<DoubleLink<D>>>,
+    tail: Option<Box<DoubleLink<D>>>,
     sorted: bool,
 }
 
 
 // List methods!
 
-fn unsorted_search<D>(list: List<D>, data: D) -> bool{
+impl<D: std::cmp::PartialEq + std::cmp::PartialOrd + std::clone::Clone> List<D> {
+    pub fn new() -> Self {
+        List{ head: None, sorted: false }
+    }
+    pub fn new_sorted() -> Self {
+        List{ head: None, sorted: true }
+    }
+
+    /// Returns true or false if the data is respectively found or not in the head (false
+    /// if the list is empty), tupled with None,
+    /// or the result of the recursive search algorithm for the other links.
+    /// See
+    /// unsorted_search_rec(link : Box<Link<D>>, data: D) -> (bool, Option<Box<Link<D>>>)
+    /// and
+    /// sorted_search_rec(link : Box<Link<D>>, data: D) -> (bool, Option<Box<Link<D>>>).
+    pub fn search(&self, data: D) -> (bool, Option<Box<Link<D>>>) {
+        match &self.head {
+            None => (false, None),
+            Some(head) => {
+                if head.data == data { (true, None) }
+                else { if self.sorted { Self::sorted_search_rec(&head, data) }
+                        else { Self::unsorted_search_rec(&head, data) } }
+            }
+        }
+    }
+    /// Returns true tupled with the link pointing to the one containing the searched data if found,
+    /// else false tupled with the link pointing towards the empty reference.
+    pub fn unsorted_search_rec(link : &Box<Link<D>>, data: D) -> (bool, Option<Box<Link<D>>>) {
+        match &link.next {
+            None => (false, Option::from(link).cloned()),
+            Some(next) => {
+                if next.data == data { (true, Option::from(link).cloned()) }
+                else { Self::unsorted_search_rec(next, data) }
+            }
+        }
+    }
+    /// Returns true tupled with the link pointing to the one containing the searched data if found,
+    /// else false tupled with the link pointing towards the empty reference.
+    pub fn sorted_search_rec(link : &Box<Link<D>>, data: D) -> (bool, Option<Box<Link<D>>>) {
+        match &link.next {
+            None => (false, Option::from(link).cloned()),
+            Some(next) => {
+                if next.data == data { (true, Option::from(link).cloned()) }
+                else if data > next.data { Self::unsorted_search_rec(next, data) }
+                else { (false, Option::from(link).cloned()) }
+            }
+        }
+    }
+
+    /// Inserts data into the list if not already present and returns true, else return false
+    /// if data is already present because no operation has been done.
+    pub fn insert(mut self, new_data: D) -> bool {
+        let (boolean, option) = self.search(new_data.clone());
+        match boolean {
+            true => { false } // No operations done because data is already in the list.
+            false => {
+                match option {
+                    None => {
+                        // Value is not in the list because the list is empty.
+                        let new = Link{data : new_data, next : None};
+                        self.head = Option::from(Box::from(new));
+                        true // An insertion has been done. List is no longer empty.
+                    }
+                    Some(mut link) => {
+                        let next = &link.next;
+                        let new : Link<D>;
+                        match next {
+                            None => { new = Link{data : new_data, next : None};}
+                            Some(reference) => {
+                                new =
+                                    Link{data : new_data, next : Option::from(reference).cloned() };
+                            }
+                        }
+                        link.next = Option::from(Box::from(new));
+                        true // An insertion has been done.
+
+                    }
+                }
+            }
+        }
+    }
+
+}
+
+
+
+
+// TESTS
+
+#[cfg(test)]
+mod tests {
+    // Note this useful idiom: importing names from outer (for mod tests) scope.
+    use super::*;
+
+    #[test]
+    fn test_add() {
+        assert_eq!(add(1, 2), 3);
+    }
 
 }
