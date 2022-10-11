@@ -34,7 +34,7 @@ pub struct CustomList<D> {
 
 // List methods!
 
-impl<D: std::cmp::PartialEq + std::cmp::PartialOrd + std::clone::Clone> List<D> {
+impl<D: PartialEq + PartialOrd + Clone> List<D> {
     pub fn new() -> Self {
         List{ head: None, sorted: false }
     }
@@ -141,7 +141,7 @@ impl<D: std::cmp::PartialEq + std::cmp::PartialOrd + std::clone::Clone> List<D> 
     }
 
 }
-
+/*
 impl<D> CustomList<D>  {
 
     pub fn new() -> Self {
@@ -166,7 +166,7 @@ impl<D> CustomList<D>  {
         }
     }
 }
-
+*/
 
 
 // TESTS
